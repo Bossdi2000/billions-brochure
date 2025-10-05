@@ -161,12 +161,12 @@ const EnterUsername = ({ onNext }) => {
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 1, duration: 0.8, ease: "easeOut" }}
-            style={{
-              position: "absolute",
+          style={{
+            position: "absolute",
               top: { xs: "10px", sm: "20px" },
               right: { xs: "10px", sm: "20px" },
-              zIndex: 15,
-            }}
+            zIndex: 15,
+          }}
         >
           <motion.div
             whileHover={{ scale: 1.05, y: -2 }}
@@ -292,24 +292,24 @@ const EnterUsername = ({ onNext }) => {
               filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.3))"
             }} 
           />
-          <Typography
-            variant="h3"
-            component="h1"
-            gutterBottom
-            sx={{
-              color: "#FFFFFF",
+                <Typography
+                  variant="h3"
+                  component="h1"
+                  gutterBottom
+                  sx={{
+                    color: "#FFFFFF",
               fontSize: { xs: "1.5rem", sm: "2rem", md: "2.5rem", lg: "3rem" },
-              fontWeight: 700,
+                    fontWeight: 700,
               textShadow: "0 4px 8px rgba(0,0,0,0.5)",
               background: "linear-gradient(45deg, #2EEBCB, #FFFFFF)",
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
               textAlign: "center",
-            }}
-          >
+                  }}
+                >
             Billions Connect
-          </Typography>
+                </Typography>
         </Box>
                 
                 <Typography

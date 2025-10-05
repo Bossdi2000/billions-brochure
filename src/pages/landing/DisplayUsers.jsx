@@ -232,17 +232,17 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
   }
 
   return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          width: "100vw",
+    <Box
+      sx={{
+        minHeight: "100vh",
+        width: "100vw",
           backgroundImage: `url('/WALL.jpeg')`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
-          p: 0,
-          margin: 0,
-          overflow: "hidden",
+        p: 0,
+        margin: 0,
+        overflow: "hidden",
           position: "relative",
           "&::before": {
             content: '""',
@@ -254,8 +254,8 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
             background: "rgba(0, 0, 0, 0.4)",
             zIndex: 1,
           },
-        }}
-      >
+      }}
+    >
       <Container 
         maxWidth={false}
         sx={{
