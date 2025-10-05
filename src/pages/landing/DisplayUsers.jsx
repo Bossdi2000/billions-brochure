@@ -29,7 +29,7 @@ import LaunchIcon from "@mui/icons-material/Launch";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://orangedynasty.global";
 
 const DisplayUsers = ({ username, project, userId, users, userCount }) => {
   const [usersToFollow, setUsersToFollow] = useState(users || []);
@@ -84,7 +84,7 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
     try {
       const response = await axios.get(`${BASE_URL}/api/f4f/users`, {
         params: {
-          project: project.toLowerCase(), // Ensure lowercase
+          project: project.toLowerCase(),
           count: userCount || 5,
           currentUsername: username,
         },
@@ -110,12 +110,23 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
     }
   };
 
-  const handleFollowUser = async (userToFollow) => {
+  const handleFollowUser = (userToFollow) => {
     try {
-      const twitterUrl = `https://x.com/${userToFollow}`;
-      window.open(twitterUrl, "_blank");
-      setFollowedUsers((prev) => new Set([...prev, userToFollow]));
-      showSnackbar(`Opened @${userToFollow}'s profile!`);
+      // Clean username - remove @ if present and trim whitespace
+      const cleanUsername = String(userToFollow).replace(/^@/, '').trim();
+      
+      if (!cleanUsername) {
+        showSnackbar('Invalid Twitter username', 'error');
+        return;
+      }
+
+      // Open Twitter profile in new tab
+      const twitterUrl = `https://x.com/${cleanUsername}`;
+      window.open(twitterUrl, "_blank", "noopener,noreferrer");
+      
+      // Mark as followed
+      setFollowedUsers((prev) => new Set([...prev, cleanUsername]));
+      showSnackbar(`Opened @${cleanUsername}'s profile!`);
     } catch (error) {
       console.error("Error opening Twitter profile:", error);
       showSnackbar("Error opening Twitter profile", "error");
@@ -128,7 +139,7 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
     try {
       const response = await axios.post(`${BASE_URL}/api/f4f/generate-message`, {
         usernames: usersToFollow.map((u) => u.username),
-        project: project.toLowerCase(), // Ensure lowercase
+        project: project.toLowerCase(),
       });
       setGeneratedMessage(response.data.message);
       setMessageGenerated(true);
@@ -151,13 +162,20 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
       await navigator.clipboard.writeText(generatedMessage);
       showSnackbar("Message copied to clipboard!");
     } catch (err) {
+      // Fallback for older browsers
       const textArea = document.createElement("textarea");
       textArea.value = generatedMessage;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
       document.body.appendChild(textArea);
       textArea.select();
-      document.execCommand("copy");
+      try {
+        document.execCommand("copy");
+        showSnackbar("Message copied to clipboard!");
+      } catch (copyErr) {
+        showSnackbar("Failed to copy message", "error");
+      }
       document.body.removeChild(textArea);
-      showSnackbar("Message copied to clipboard!");
     }
   };
 
@@ -170,11 +188,8 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
       });
 
       if (response.data.success && response.data.twitterUrl) {
-        window.open(response.data.twitterUrl, "_blank");
+        window.open(response.data.twitterUrl, "_blank", "noopener,noreferrer");
         showSnackbar("Twitter opened with your message!");
-        setTimeout(() => {
-          alert('Twitter opened with your message pre-filled! Just click "Post" to share it.');
-        }, 500);
       } else {
         setError("Failed to generate Twitter URL");
         showSnackbar("Failed to generate Twitter URL", "error");
@@ -226,7 +241,9 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
         }}
       >
         <CircularProgress size={48} sx={{ color: "#FFFFFF", mb: 2 }} />
-        <Typography sx={{ color: "#FFFFFF" }}>Finding users bullish on {project}...</Typography>
+        <Typography sx={{ color: "#FFFFFF", fontSize: { xs: "0.9rem", sm: "1rem" } }}>
+          Finding users bullish on {project}...
+        </Typography>
       </Box>
     );
   }
@@ -236,41 +253,41 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
       sx={{
         minHeight: "100vh",
         width: "100vw",
-          backgroundImage: `url('/WALL.jpeg')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
+        backgroundImage: `url('/WALL.jpeg')`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
         p: 0,
         margin: 0,
-        overflow: "hidden",
-          position: "relative",
-          "&::before": {
-            content: '""',
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0, 0, 0, 0.4)",
-            zIndex: 1,
-          },
+        overflow: "auto",
+        position: "relative",
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: "rgba(0, 0, 0, 0.4)",
+          zIndex: 1,
+        },
       }}
     >
       <Container 
-        maxWidth={false}
+        maxWidth="lg"
         sx={{
-          width: "100%",
-          maxWidth: "none !important",
-          p: { xs: 1, sm: 2, md: 3 },
-          margin: 0,
+          position: "relative",
+          zIndex: 2,
+          p: { xs: 2, sm: 3, md: 4 },
         }}
       >
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.6 }}
+        >
           <Card
             sx={{
-              width: "100%",
-              maxWidth: "none",
-              mx: 0,
               borderRadius: 3,
               boxShadow: "0 20px 40px rgba(0, 0, 0, 0.3)",
               backgroundColor: "rgba(0, 0, 0, 0.2)",
@@ -286,21 +303,19 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
                   gutterBottom
                   sx={{
                     color: "#FFFFFF",
-                    fontSize: { xs: "1.2rem", sm: "1.5rem", md: "2rem", lg: "2.5rem" },
+                    fontSize: { xs: "1.5rem", sm: "2rem", md: "2.5rem" },
                     fontWeight: 700,
                     textShadow: "0 4px 8px rgba(0,0,0,0.8)",
-                    textAlign: "center",
                   }}
                 >
                   Follow These {usersToFollow.length} Accounts
                 </Typography>
                 <Typography
                   variant="body1"
-                  color="text.secondary"
                   sx={{
                     color: "#FFFFFF",
                     mb: 2,
-                              fontSize: { xs: "0.7rem", sm: "0.8rem", md: "0.9rem", lg: "1rem" },
+                    fontSize: { xs: "0.9rem", sm: "1rem", md: "1.1rem" },
                     textShadow: "0 2px 4px rgba(0,0,0,0.6)",
                     fontWeight: 500,
                   }}
@@ -308,13 +323,12 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
                   All bullish on{" "}
                   <Chip
                     label={project}
-                    color="primary"
                     size="small"
                     sx={{ 
                       backgroundColor: "#2EEBCB", 
                       color: "#000000",
                       fontWeight: 600,
-                      textShadow: "none",
+                      mx: 0.5,
                     }}
                   />
                 </Typography>
@@ -327,12 +341,16 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
                   sx={{
                     color: "#FFFFFF",
                     borderColor: "#FFFFFF",
-                    fontSize: { xs: "0.7rem", sm: "0.8rem", md: "0.9rem", lg: "1rem" },
+                    fontSize: { xs: "0.8rem", sm: "0.9rem" },
                     py: { xs: 0.5, sm: 1 },
-                    px: { xs: 1, sm: 2 },
+                    px: { xs: 1.5, sm: 2 },
                     "&:hover": {
-                      borderColor: "#E0E0E0",
-                      backgroundColor: "rgba(255, 255, 255, 0.1)",
+                      borderColor: "#2EEBCB",
+                      backgroundColor: "rgba(46, 235, 203, 0.1)",
+                    },
+                    "&:disabled": {
+                      borderColor: "rgba(255, 255, 255, 0.3)",
+                      color: "rgba(255, 255, 255, 0.3)",
                     },
                   }}
                 >
@@ -341,102 +359,135 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
               </Box>
 
               {error && (
-                <Alert severity="info" sx={{ mb: 3, backgroundColor: "#FFFFFF", color: "#0EA5A5" }}>
+                <Alert 
+                  severity="info" 
+                  sx={{ 
+                    mb: 3, 
+                    backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    "& .MuiAlert-message": {
+                      color: "#0EA5A5",
+                    }
+                  }}
+                >
                   {error}
                 </Alert>
               )}
 
               {usersToFollow.length === 0 && !error && !loading ? (
-                <Alert severity="info" sx={{ mb: 3, backgroundColor: "#FFFFFF", color: "#0EA5A5" }}>
+                <Alert 
+                  severity="info" 
+                  sx={{ 
+                    mb: 3, 
+                    backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    "& .MuiAlert-message": {
+                      color: "#0EA5A5",
+                    }
+                  }}
+                >
                   No users found for {project}. Try refreshing or check back later!
                 </Alert>
               ) : (
                 <>
                   <List sx={{ mb: 3 }}>
                     <AnimatePresence>
-                      {usersToFollow.map((user, index) => (
-                        <motion.div
-                          key={user.username}
-                          initial={{ opacity: 0, x: -30 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                        >
-                          <ListItem
-                            sx={{
-                              mb: 2,
-                              bgcolor: followedUsers.has(user.username)
-                                ? "rgba(76, 175, 80, 0.2)"
-                                : "rgba(255, 255, 255, 0.9)",
-                              borderRadius: 2,
-                              border: "2px solid",
-                              borderColor: followedUsers.has(user.username) ? "#4CAF50" : "#FFFFFF",
-                              transition: "all 0.3s ease",
-                              flexDirection: { xs: "column", sm: "row" },
-                              alignItems: { xs: "stretch", sm: "center" },
-                              gap: { xs: 1, sm: 2 },
-                              "&:hover": {
-                                transform: "translateY(-2px)",
-                                boxShadow: 4,
-                              },
-                            }}
+                      {usersToFollow.map((user, index) => {
+                        const isFollowed = followedUsers.has(user.username);
+                        return (
+                          <motion.div
+                            key={user.username}
+                            initial={{ opacity: 0, x: -30 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.1 }}
                           >
-                            <Box
+                            <ListItem
                               sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                flex: 1,
-                                minWidth: 0,
-                              }}
-                            >
-                              <ListItemAvatar>
-                                <Avatar sx={{ bgcolor: followedUsers.has(user.username) ? "#4CAF50" : "#2EEBCB" }}>
-                                  <TwitterIcon sx={{ color: "#FFFFFF" }} />
-                                </Avatar>
-                              </ListItemAvatar>
-                              <ListItemText
-  primary={`@${user.username}`}
-  secondary={`Bullish on ${user.project}`}
-  sx={{
-    color: followedUsers.has(user.username) ? "#4CAF50" : "#FFFFFF",
-    "& .MuiListItemText-secondary": {
-      color: followedUsers.has(user.username) ? "#4CAF50" : "#FFFFFF",
-      fontSize: { xs: "0.7rem", sm: "0.8rem", md: "0.9rem", lg: "1rem" },
-      opacity: 0.9,
-      textShadow: "0 1px 2px rgba(0,0,0,0.5)",
-    },
-    "& .MuiListItemText-primary": {
-                              fontSize: { xs: "0.7rem", sm: "0.8rem", md: "0.9rem", lg: "1rem" },
-      fontWeight: 700,
-      textShadow: "0 1px 2px rgba(0,0,0,0.5)",
-    },
-  }}
-                              />
-                            </Box>
-                            <Button
-                              variant={followedUsers.has(user.username) ? "outlined" : "contained"}
-                              color={followedUsers.has(user.username) ? "success" : "primary"}
-                              startIcon={<PersonAddIcon />}
-                              onClick={() => handleFollowUser(user.username)}
-                              disabled={followedUsers.has(user.username)}
-                              sx={{
-                                ml: { xs: 0, sm: 2 },
-                                minWidth: { xs: "100%", sm: "auto" },
-                                fontSize: { xs: "0.7rem", sm: "0.8rem", md: "0.9rem", lg: "1rem" },
-                                backgroundColor: followedUsers.has(user.username) ? "transparent" : "#2EEBCB",
-                                color: followedUsers.has(user.username) ? "#4CAF50" : "#FFFFFF",
-                                borderColor: followedUsers.has(user.username) ? "#4CAF50" : "#2EEBCB",
+                                mb: 2,
+                                bgcolor: isFollowed
+                                  ? "rgba(76, 175, 80, 0.2)"
+                                  : "rgba(255, 255, 255, 0.9)",
+                                borderRadius: 2,
+                                border: "2px solid",
+                                borderColor: isFollowed ? "#4CAF50" : "rgba(46, 235, 203, 0.5)",
+                                transition: "all 0.3s ease",
+                                flexDirection: { xs: "column", sm: "row" },
+                                alignItems: { xs: "stretch", sm: "center" },
+                                gap: { xs: 1, sm: 2 },
+                                p: { xs: 2, sm: 2 },
                                 "&:hover": {
-                                  backgroundColor: followedUsers.has(user.username)
-                                    ? "rgba(76, 175, 80, 0.1)"
-                                    : "#10B3A3",
+                                  transform: "translateY(-2px)",
+                                  boxShadow: "0 8px 16px rgba(0,0,0,0.2)",
                                 },
                               }}
                             >
-                              {followedUsers.has(user.username) ? "Followed ✓" : "Follow"}
-                            </Button>
-                          </ListItem>
-                        </motion.div>
-                      ))}
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  flex: 1,
+                                  minWidth: 0,
+                                }}
+                              >
+                                <ListItemAvatar>
+                                  <Avatar 
+                                    sx={{ 
+                                      bgcolor: isFollowed ? "#4CAF50" : "#2EEBCB",
+                                      width: { xs: 40, sm: 48 },
+                                      height: { xs: 40, sm: 48 },
+                                    }}
+                                  >
+                                    <TwitterIcon sx={{ color: "#FFFFFF" }} />
+                                  </Avatar>
+                                </ListItemAvatar>
+                                <ListItemText
+                                  primary={`@${user.username}`}
+                                  secondary={`Bullish on ${user.project}`}
+                                  sx={{
+                                    "& .MuiListItemText-primary": {
+                                      color: isFollowed ? "#4CAF50" : "#000000",
+                                      fontSize: { xs: "0.95rem", sm: "1.1rem" },
+                                      fontWeight: 700,
+                                    },
+                                    "& .MuiListItemText-secondary": {
+                                      color: isFollowed ? "#4CAF50" : "#666666",
+                                      fontSize: { xs: "0.8rem", sm: "0.9rem" },
+                                      opacity: 0.9,
+                                    },
+                                  }}
+                                />
+                              </Box>
+                              <Button
+                                variant={isFollowed ? "outlined" : "contained"}
+                                color={isFollowed ? "success" : "primary"}
+                                startIcon={<PersonAddIcon />}
+                                onClick={() => handleFollowUser(user.username)}
+                                disabled={isFollowed}
+                                sx={{
+                                  minWidth: { xs: "100%", sm: 120 },
+                                  fontSize: { xs: "0.85rem", sm: "0.95rem" },
+                                  fontWeight: 600,
+                                  py: { xs: 1, sm: 1 },
+                                  backgroundColor: isFollowed ? "transparent" : "#2EEBCB",
+                                  color: isFollowed ? "#4CAF50" : "#FFFFFF",
+                                  borderColor: isFollowed ? "#4CAF50" : "#2EEBCB",
+                                  cursor: isFollowed ? "default" : "pointer",
+                                  "&:hover": {
+                                    backgroundColor: isFollowed
+                                      ? "rgba(76, 175, 80, 0.1)"
+                                      : "#10B3A3",
+                                    borderColor: isFollowed ? "#4CAF50" : "#10B3A3",
+                                  },
+                                  "&:disabled": {
+                                    opacity: 0.8,
+                                    cursor: "default",
+                                  },
+                                }}
+                              >
+                                {isFollowed ? "Followed ✓" : "Follow"}
+                              </Button>
+                            </ListItem>
+                          </motion.div>
+                        );
+                      })}
                     </AnimatePresence>
                   </List>
 
@@ -451,33 +502,32 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
                           sx={{
                             textAlign: "center",
                             mt: 4,
-                            p: { xs: 1.5, sm: 2, md: 3 },
-                            backgroundColor: "rgba(255, 255, 255, 0.1)",
+                            p: { xs: 2, sm: 3 },
+                            backgroundColor: "rgba(46, 235, 203, 0.1)",
                             borderRadius: 2,
+                            border: "2px solid rgba(46, 235, 203, 0.3)",
                           }}
                         >
                           <Typography
                             variant="h6"
                             sx={{
-                              mb: 3,
+                              mb: 2,
                               color: "#FFFFFF",
-                              fontSize: { xs: "1rem", sm: "1.1rem", md: "1.3rem", lg: "1.5rem" },
+                              fontSize: { xs: "1.1rem", sm: "1.3rem", md: "1.5rem" },
                               fontWeight: 700,
                               textShadow: "0 2px 4px rgba(0,0,0,0.8)",
-                              textAlign: "center",
                             }}
                           >
-                            🎉 Awesome! You've followed all {usersToFollow.length} accounts!
+                            Awesome! You've followed all {usersToFollow.length} accounts!
                           </Typography>
                           <Typography
                             variant="body2"
                             sx={{
                               mb: 3,
                               color: "#FFFFFF",
-                              fontSize: { xs: "0.7rem", sm: "0.8rem", md: "0.9rem", lg: "1rem" },
+                              fontSize: { xs: "0.85rem", sm: "0.95rem" },
                               fontWeight: 500,
                               textShadow: "0 1px 2px rgba(0,0,0,0.6)",
-                              textAlign: "center",
                             }}
                           >
                             Now generate a message to let them know you followed and ask for a follow back!
@@ -499,13 +549,17 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
                                 onClick={generateMessage}
                                 disabled={loading}
                                 sx={{
-                                  py: { xs: 1.2, sm: 1.5, md: 1.8 },
-                                  px: { xs: 3, sm: 4, md: 5 },
-                                  fontSize: { xs: "0.8rem", sm: "0.9rem", md: "1rem" },
+                                  py: { xs: 1.2, sm: 1.5 },
+                                  px: { xs: 3, sm: 4 },
+                                  fontSize: { xs: "0.85rem", sm: "0.95rem" },
+                                  fontWeight: 600,
                                   backgroundColor: "#FFFFFF",
                                   color: "#0EA5A5",
                                   "&:hover": {
                                     backgroundColor: "#E0E0E0",
+                                  },
+                                  "&:disabled": {
+                                    backgroundColor: "rgba(255, 255, 255, 0.5)",
                                   },
                                 }}
                               >
@@ -522,10 +576,11 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
                                 sx={{
                                   color: "#FFFFFF",
                                   borderColor: "#FFFFFF",
-                                  fontSize: { xs: "0.8rem", sm: "0.9rem", md: "1rem" },
+                                  fontSize: { xs: "0.85rem", sm: "0.95rem" },
+                                  fontWeight: 600,
                                   "&:hover": {
-                                    borderColor: "#E0E0E0",
-                                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                                    borderColor: "#2EEBCB",
+                                    backgroundColor: "rgba(46, 235, 203, 0.1)",
                                   },
                                 }}
                               >
@@ -539,10 +594,11 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
                               sx={{
                                 color: "#FFFFFF",
                                 borderColor: "#FFFFFF",
-                                fontSize: { xs: "0.8rem", sm: "0.9rem", md: "1rem" },
+                                fontSize: { xs: "0.85rem", sm: "0.95rem" },
+                                fontWeight: 600,
                                 "&:hover": {
-                                  borderColor: "#E0E0E0",
-                                  backgroundColor: "rgba(255, 255, 255, 0.1)",
+                                  borderColor: "#2EEBCB",
+                                  backgroundColor: "rgba(46, 235, 203, 0.1)",
                                 },
                               }}
                             >
@@ -565,9 +621,17 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
         onClose={() => setShowMessageDialog(false)}
         maxWidth="md"
         fullWidth
-        PaperProps={{ sx: { backgroundColor: "rgba(0, 0, 0, 0.2)", backdropFilter: "blur(25px)", border: "1px solid rgba(46, 235, 203, 0.4)", color: "#FFFFFF" } }}
+        PaperProps={{ 
+          sx: { 
+            backgroundColor: "rgba(0, 0, 0, 0.9)", 
+            backdropFilter: "blur(25px)", 
+            border: "1px solid rgba(46, 235, 203, 0.4)",
+          } 
+        }}
       >
-        <DialogTitle sx={{ color: "#FFFFFF" }}>Your Follow-Back Message</DialogTitle>
+        <DialogTitle sx={{ color: "#FFFFFF", fontWeight: 600 }}>
+          Your Follow-Back Message
+        </DialogTitle>
         <DialogContent>
           <TextField
             multiline
@@ -578,55 +642,94 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
             sx={{
               mb: 2,
               "& .MuiOutlinedInput-root": {
-                "& fieldset": { borderColor: "#FFFFFF" },
-                "&:hover fieldset": { borderColor: "#FFFFFF" },
-                "&.Mui-focused fieldset": { borderColor: "#FFFFFF" },
+                "& fieldset": { borderColor: "rgba(46, 235, 203, 0.5)" },
+                "&:hover fieldset": { borderColor: "#2EEBCB" },
+                "&.Mui-focused fieldset": { borderColor: "#2EEBCB" },
               },
-              "& .MuiInputBase-input": { color: "#FFFFFF" },
-              "& .MuiInputLabel-root": { color: "#FFFFFF" },
+              "& .MuiInputBase-input": { 
+                color: "#FFFFFF",
+                fontSize: { xs: "0.9rem", sm: "1rem" },
+              },
             }}
             InputProps={{
               readOnly: true,
             }}
           />
-          <Typography variant="caption" color="text.secondary" sx={{ color: "#FFFFFF" }}>
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: "rgba(255, 255, 255, 0.7)",
+              display: "block",
+              mb: 1,
+            }}
+          >
             This message will help you connect with other {project} enthusiasts and grow your network!
           </Typography>
-          <Typography variant="caption" sx={{ color: "#FFFFFF", display: "block", mt: 1 }}>
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: generatedMessage.length > 280 ? "#ff5252" : "#4CAF50",
+              display: "block",
+              fontWeight: 600,
+            }}
+          >
             Characters: {generatedMessage.length}/280
           </Typography>
         </DialogContent>
-        <DialogActions sx={{ flexDirection: { xs: "column", sm: "row" }, gap: 1 }}>
+        <DialogActions sx={{ 
+          flexDirection: { xs: "column", sm: "row" }, 
+          gap: 1,
+          p: 2,
+        }}>
           <Button
             onClick={handleCopyMessage}
-            startIcon={<ContentCopyIcon sx={{ color: "#FFFFFF" }} />}
+            startIcon={<ContentCopyIcon />}
             sx={{
               color: "#FFFFFF",
-              "&:hover": { backgroundColor: "rgba(255, 255, 255, 0.1)" },
+              width: { xs: "100%", sm: "auto" },
+              "&:hover": { 
+                backgroundColor: "rgba(46, 235, 203, 0.1)",
+              },
             }}
           >
             Copy Message
           </Button>
           <Button
             onClick={handlePostOnTwitter}
-            startIcon={<LaunchIcon sx={{ color: "#FFFFFF" }} />}
+            startIcon={<LaunchIcon />}
             variant="contained"
             disabled={loading}
             sx={{
-              backgroundColor: "#FFFFFF",
-              color: "#0EA5A5",
-              "&:hover": { backgroundColor: "#E0E0E0" },
+              backgroundColor: "#2EEBCB",
+              color: "#000000",
+              fontWeight: 600,
+              width: { xs: "100%", sm: "auto" },
+              "&:hover": { 
+                backgroundColor: "#10B3A3",
+              },
+              "&:disabled": {
+                backgroundColor: "rgba(46, 235, 203, 0.5)",
+              },
             }}
           >
-            {loading ? <CircularProgress size={24} sx={{ color: "#2EEBCB" }} /> : "Post to Twitter"}
+            {loading ? (
+              <CircularProgress size={24} sx={{ color: "#000000" }} />
+            ) : (
+              "Post to Twitter"
+            )}
           </Button>
-          <Button onClick={() => setShowMessageDialog(false)} sx={{ color: "#FFFFFF" }}>
+          <Button 
+            onClick={() => setShowMessageDialog(false)} 
+            sx={{ 
+              color: "#FFFFFF",
+              width: { xs: "100%", sm: "auto" },
+            }}
+          >
             Close
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar positioned at bottom-right */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={4000}
@@ -637,6 +740,7 @@ const DisplayUsers = ({ username, project, userId, users, userCount }) => {
             backgroundColor: snackbarSeverity === 'error' ? '#f44336' : '#4caf50',
             color: '#ffffff',
             fontWeight: 500,
+            fontSize: { xs: "0.85rem", sm: "0.95rem" },
           }
         }}
         message={snackbarMessage}
